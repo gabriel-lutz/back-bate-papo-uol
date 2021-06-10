@@ -36,6 +36,18 @@ app.get("/participants", (req,res)=>{
     }
 })
 
+app.post("/messages", (req,res)=>{
+    const newMessage = {...req.body, from: req.header("User"), time: dayjs().format('HH:MM:ss')}
+    console.log(newMessage)
+    if(newMessage.to.length === 0 || newMessage.text.length === 0 || (newMessage.type !== "message" && newMessage.type !== "private_message") || !participants.some(p=> p.name === newMessage.from)){
+        res.sendStatus(400)
+        console.log("msg com erro")
+    }else{
+        res.sendStatus(200)
+    }
+    
+})
+
 app.listen(4000, ()=>{
     console.log("O servidor está rodando na porta 4000 ...")
 })
