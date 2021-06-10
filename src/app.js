@@ -61,6 +61,17 @@ app.get("/messages", (req,res)=>{
     res.send(messagesToReturn)
 })
 
+app.post("/status", (req,res)=>{
+    const user = req.header("User")
+    const index = participants.findIndex(p=> p.name === user)
+    if(index !== -1){
+        participants[index].time = Date.now()
+        res.sendStatus(200)
+    }else{
+        res.sendStatus(400)
+    }
+})
+
 app.listen(4000, ()=>{
     console.log("O servidor está rodando na porta 4000 ...")
 })
