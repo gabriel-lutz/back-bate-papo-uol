@@ -41,11 +41,24 @@ app.post("/messages", (req,res)=>{
     console.log(newMessage)
     if(newMessage.to.length === 0 || newMessage.text.length === 0 || (newMessage.type !== "message" && newMessage.type !== "private_message") || !participants.some(p=> p.name === newMessage.from)){
         res.sendStatus(400)
-        console.log("msg com erro")
     }else{
+        messages.push(newMessage)
         res.sendStatus(200)
     }
-    
+})
+
+app.get("/messages", (req,res)=>{
+    const user = req.header("User")
+    const numberOfMessages = req.query.limit
+    const messagesToReturn = []
+    messages.filter(m=>{
+        if(numberOfMessages? messagesToReturn.length < numberOfMessages: true){
+            if(m.to === user || m.to === "Todos" || m.from === user || m.type === "message" || m.type === "status"){
+                messagesToReturn.push(m)
+            }
+        }
+    })
+    res.send(messagesToReturn)
 })
 
 app.listen(4000, ()=>{
