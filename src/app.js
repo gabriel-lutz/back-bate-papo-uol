@@ -7,9 +7,9 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
-const participants = [{}]
+const participants = []
 
-const messages = [{}]
+const messages = []
 
 app.post("/participants", (req,res)=>{
     const newParticipant = {...req.body, lastStatus: Date.now()}
@@ -25,6 +25,14 @@ app.post("/participants", (req,res)=>{
             time: dayjs().format('HH:MM:ss')
         })
         res.sendStatus(200)
+    }
+})
+
+app.get("/participants", (req,res)=>{
+    if(participants.length !== 0){
+        res.send(participants)
+    }else{
+        res.send({})
     }
 })
 
