@@ -1,15 +1,38 @@
 import express from "express"
 import cors from "cors"
 import dayjs from "dayjs"
-import joi from "joi"
 import Joi from "joi"
+import {writeFile, readFile} from "fs"
 
 const app = express()
 app.use(cors())
 app.use(express.json())
 
-const participants = []
-const messages = []
+let participants = []
+let messages = []
+
+readFile('../.participants.txt', (err, data)=>{
+    if(err){
+        console.log("Sem lista de participantes no sistema. Criando uma nova lista ...")
+    }else{
+         participants = JSON.parse(data)
+    }
+})
+
+readFile('../.messages.txt', (err,data)=>{
+    if(err){
+         console.log("Sem lista de mensagens no sistema. Criando uma nova lista ... ")
+    }else{
+         messages = JSON.parse(data)
+    }
+})
+
+function saveToFile(){
+    const participantsStringToSave = JSON.stringify(participants)
+    const messagesStringToSave = JSON.stringify(messages)
+    writeFile('../.participants.txt',participantsStringToSave, ()=>{})
+    writeFile('../.messages.txt', messagesStringToSave, ()=>{})
+}
 
 const participantsSchema = Joi.object({
     name: Joi.string()
@@ -41,6 +64,7 @@ app.post("/participants", (req,res)=>{
             time: dayjs().format('HH:MM:ss')
         })
         res.sendStatus(200)
+        saveToFile()
     }
 })
 
@@ -59,6 +83,7 @@ app.post("/messages", (req,res)=>{
     }else{
         messages.push(newMessage)
         res.sendStatus(200)
+        saveToFile()
     }
 })
 
@@ -83,6 +108,7 @@ app.post("/status", (req,res)=>{
     if(index !== -1){
         participants[index].time = Date.now()
         res.sendStatus(200)
+        saveToFile()
     }else{
         res.sendStatus(400)
     }
@@ -99,6 +125,7 @@ setInterval(()=>{
                 type: "status",
                 time: dayjs().format('HH:MM:ss')
             })
+            saveToFile()
         }
     })
 },[15000])
