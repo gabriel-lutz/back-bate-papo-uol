@@ -2,13 +2,11 @@ import express from "express"
 import cors from "cors"
 import dayjs from "dayjs"
 
-
 const app = express()
 app.use(cors())
 app.use(express.json())
 
 const participants = []
-
 const messages = []
 
 app.post("/participants", (req,res)=>{
@@ -38,7 +36,6 @@ app.get("/participants", (req,res)=>{
 
 app.post("/messages", (req,res)=>{
     const newMessage = {...req.body, from: req.header("User"), time: dayjs().format('HH:MM:ss')}
-    console.log(newMessage)
     if(newMessage.to.length === 0 || newMessage.text.length === 0 || (newMessage.type !== "message" && newMessage.type !== "private_message") || !participants.some(p=> p.name === newMessage.from)){
         res.sendStatus(400)
     }else{
@@ -51,14 +48,15 @@ app.get("/messages", (req,res)=>{
     const user = req.header("User")
     const numberOfMessages = req.query.limit
     const messagesToReturn = []
-    messages.filter(m=>{
+    const reversedArray = [...messages].reverse()
+    reversedArray.filter(m=>{
         if(numberOfMessages? messagesToReturn.length < numberOfMessages: true){
             if(m.to === user || m.to === "Todos" || m.from === user || m.type === "message" || m.type === "status"){
                 messagesToReturn.push(m)
             }
         }
     })
-    res.send(messagesToReturn)
+    res.send(messagesToReturn.reverse())
 })
 
 app.post("/status", (req,res)=>{
@@ -71,6 +69,21 @@ app.post("/status", (req,res)=>{
         res.sendStatus(400)
     }
 })
+
+setInterval(()=>{
+    participants.length > 0 && participants.forEach((p,i)=>{
+        if(Date.now() - p.time > 10000){
+            participants.splice(i,1)
+            messages.push({
+                from: p.name,
+                to: "Todos",
+                text: "Sai da sala...",
+                type: "status",
+                time: dayjs().format('HH:MM:ss')
+            })
+        }
+    })
+},[15000])
 
 app.listen(4000, ()=>{
     console.log("O servidor está rodando na porta 4000 ...")
