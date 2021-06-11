@@ -1,6 +1,8 @@
 import express from "express"
 import cors from "cors"
 import dayjs from "dayjs"
+import joi from "joi"
+import Joi from "joi"
 
 const app = express()
 app.use(cors())
@@ -9,9 +11,25 @@ app.use(express.json())
 const participants = []
 const messages = []
 
+const participantsSchema = Joi.object({
+    name: Joi.string()
+        .min(1)
+        .required(),
+    lastStatus: Joi.number()
+})
+
+const messageSchema = Joi.object({
+    to: [Joi.number().min(1),Joi.string().min(1)],
+    text: [Joi.number().min(1),Joi.string().min(1)],
+    type: Joi.string().valid('message', 'private_message'),
+    from: Joi.string(),
+    time: [Joi.string(), Joi.number()]
+
+}).or('to', 'text', 'type', 'from', 'time')
+
 app.post("/participants", (req,res)=>{
     const newParticipant = {...req.body, lastStatus: Date.now()}
-    if(newParticipant.name.length === 0 || participants.some(p=> p.name === newParticipant.name)){
+    if(participantsSchema.validate(newParticipant).error || participants.some(p=> p.name === newParticipant.name)){
         res.send(400)
     }else{
         participants.push(newParticipant)
@@ -36,8 +54,8 @@ app.get("/participants", (req,res)=>{
 
 app.post("/messages", (req,res)=>{
     const newMessage = {...req.body, from: req.header("User"), time: dayjs().format('HH:MM:ss')}
-    if(newMessage.to.length === 0 || newMessage.text.length === 0 || (newMessage.type !== "message" && newMessage.type !== "private_message") || !participants.some(p=> p.name === newMessage.from)){
-        res.sendStatus(400)
+    if( messageSchema.validate(newMessage).error || !participants.some(p=> p.name === newMessage.from)){
+        res.sendStatus(401)
     }else{
         messages.push(newMessage)
         res.sendStatus(200)
